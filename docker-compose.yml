@@ -1,0 +1,95 @@
+version: "3.8"
+services:
+  traefik:
+    image: traefik:v2.4
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - operator_net
+      - field_net
+
+  operator:
+    image: dockurr/windows
+    container_name: operator
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.operator.rule=Host(`operator.example.com`)"
+      - "traefik.http.services.operator.loadbalancer.server.port=8006"
+    devices:
+      - /dev/kvm
+    cap_add:
+      - NET_ADMIN
+
+    stop_grace_period: 2m
+    restart: on-failure
+    environment:
+      VERSION: "tiny10"
+    volumes:
+      - ./vol/operator:/storage
+      - ./assets/win10x64.xml:/run/assets/win10x64.xml
+    networks:
+      - operator_net
+
+  scada:
+    image: dockurr/windows
+    container_name: scada
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.scada.rule=Host(`scada.example.com`)"
+      - "traefik.http.services.scada.loadbalancer.server.port=8006"
+    devices:
+      - /dev/kvm
+    cap_add:
+      - NET_ADMIN
+    stop_grace_period: 2m
+    restart: on-failure
+    environment:
+      VERSION: "tiny10"
+    volumes:
+      - ./vol/scada:/storage
+      - ./assets/win10x64.xml:/run/assets/win10x64.xml
+    networks:
+      - operator_net
+
+  plc1:
+    image: alpine:latest
+    container_name: plc1
+    restart: on-failure
+    tty: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plc1.rule=Host(`plc1.example.com`)"
+      - "traefik.http.services.plc1.loadbalancer.server.port=80"
+    networks:
+      - field_net
+  plc2:
+    image: alpine:latest
+    container_name: plc2
+    restart: on-failure
+    tty: true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plc2.rule=Host(`plc2.example.com`)"
+      - "traefik.http.services.plc2.loadbalancer.server.port=80"
+    networks:
+      - field_net
+
+networks:
+  operator_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.0.0/24
+  field_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.100.0/24
