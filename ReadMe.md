@@ -1,0 +1,1 @@
+dism /export-image /SourceImageFile:F:\sources\install.esd /SourceIndex:3 /DestinationImageFile:C:\install.wim /Compress:max /CheckIntegrity

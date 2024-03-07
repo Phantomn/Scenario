@@ -1,0 +1,65 @@
+{
+	"builders": [
+		{
+			"type": "vsphere-iso",
+			"vcenter_server": "192.168.11.201",
+			"username": "hsp@vsphere.local",
+			"password": "Tmd$vyr!23",
+			"insecure_connection": "true",
+
+			"vm_name": "HONGSP_Win10",
+			"folder" : "ICS_Research-TEAM/HONGSP",
+			"datacenter": "Datacenter",
+
+			"host": "192.168.11.202",
+			"datastore": "202_Attached_DATA3",
+
+			"network_adapters": [
+				{
+					"network": "VM Network",
+					"network_card": "vmxnet3"
+				}
+			],
+			"convert_to_template": "true",
+			
+			"vm_version": "14",
+			"guest_os_type": "windows9_64Guest",
+			
+			"communicator": "winrm",
+			"winrm_username": "Administrator",
+			"winrm_password": "C0resec!",
+
+			"CPUs": "2",
+			"CPU_hot_plug": "true",
+			"RAM": "16384",
+			"RAM_hot_plug": "true",
+			"RAM_reserve_all": "true",
+			"firmware": "bios",
+
+			"disk_controller_type": "lsilogic-sas",
+			"storage": [
+				{
+					"disk_size": "65536"
+				}
+			],
+			
+			"iso_paths": [
+				"[202_Attached_DATA3] ISO/Win10_22H2.iso"
+			],
+			
+			"floppy_files": [
+				"./floppy/Autounattend.xml",
+				"./floppy/vmtools.cmd",
+				"./floppy/programInstall.ps1",
+				"./floppy/winRM.ps1"
+			]
+			
+		}
+	],
+	"provisioners": [
+		{
+			"type": "powershell",
+			"inline": ["powershell -executionpolicy bypass a:\\programInstall.ps1"]
+		}		
+	]
+}
